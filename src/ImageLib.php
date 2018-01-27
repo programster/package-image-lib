@@ -273,15 +273,17 @@ class ImageLib
         {
             self::drawLine($image, $line, $color, $thickness);
         }
+        
+        return $image;
     }
     
     
     public static function drawLine(Image $image, Line $line, Color $color, int $thickness) : bool
     {
-        imagesetthickness($image, $thickness);
+        imagesetthickness($image->getResource(), $thickness);
         
         return imageline(
-            $image,
+            $image->getResource(),
             $line->getStartPoint()->getX(), 
             $line->getStartPoint()->getY(), 
             $line->getEndPoint()->getX(), 
