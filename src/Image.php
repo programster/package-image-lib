@@ -140,5 +140,3 @@ class Image
     # Accessors
     public function getResource() { return $this->m_imageResource; }
 }
-
-    
