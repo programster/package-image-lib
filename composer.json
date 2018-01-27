@@ -1,0 +1,25 @@
+{
+    "name": "programster/image-lib",
+    "type": "SDK",
+    "description": "A PHP Package to make it easier to manipulate images.",
+    "keywords": ["image", "images", "image-manipulation", "GD"],
+    "homepage": "https://github.com/programster/package-image-lib",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Stuart Page (Programster)",
+            "email": "sdpagent@gmail.com",
+            "homepage": "http://blog.programster.org/",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=7.0.0",
+        "ext-gd": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Programster\\ImageLib\\": "src/"
+        }
+    }
+}
