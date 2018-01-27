@@ -34,7 +34,7 @@ class ImageLib
             throw new \Exception($msg);
         }
         
-        return Image::createFromResource($resource);
+        return Image::createFromResource($resource, $image->getType());
     }
     
     
@@ -115,7 +115,7 @@ class ImageLib
         $decimalPercentage = $percentage / 100.0;
         $newWidth = $currentWidth * $decimalPercentage;
         $newResource = imagescale($image->getResource(), $newWidth);
-        return Image::createFromResource($newResource);
+        return Image::createFromResource($newResource, $image->getType());
     }
     
     // shrinks an image to this height, preserving aspect ratio
@@ -143,7 +143,7 @@ class ImageLib
             $dimensions->getHeight()
         );
         
-        return Image::createFromResource($resource);
+        return Image::createFromResource($resource, $image->getType());
     }
     
     // Alias for scaleToDimensions

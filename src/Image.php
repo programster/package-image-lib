@@ -10,6 +10,7 @@ namespace Programster\ImageLib;
 class Image
 {
     private $m_imageResource;
+    private $m_type;
     
     
     /**
@@ -18,9 +19,10 @@ class Image
      * Can't wait for polymorphism in PHP.
      * @param type $resource
      */
-    private function __construct($resource)
+    private function __construct($resource, string $type)
     {
         $this->m_imageResource = $resource;
+        $this->m_type = $type;
     }
     
     
@@ -28,26 +30,30 @@ class Image
      * Create an image resource from the specified filepath.
      * You will need this for all the other functions, so it's pretty handy.
      * @param string $filepath - the path to the file you wish to manipulate.
-     * @return \Programster\ImageLib\ImageLib
+     * @param string $type - manually specify the type. E.g. gif, jpg etc.
+     * @return \Programster\ImageLib\Image
      * @throws \Exception
      */
-    public static function createFromFilepath(string $filepath)
+    public static function createFromFilepath(string $filepath, string $type = "")
     {
         if (!file_exists($filepath))
         {
             throw new \Exception("Could not find provided file: {$filepath}");
         }
         
-        $parts = explode(".", $filepath);
-        $extension = end($parts);
-        
-        if ($extension === FALSE)
+        if ($type === "")
         {
-            throw new \Exception("Failed to find extension of file");
+            $parts = explode(".", $filepath);
+            $type = end($parts);
+            
+            if ($type === FALSE)
+            {
+                throw new \Exception("Failed to dynamically find type of file from extension");
+            }
         }
         
         $map = self::getLoadingMap();
-        $loweredExtension = strtolower($extension);
+        $loweredExtension = strtolower($type);
         
         if (in_array($loweredExtension, array_keys($map)))
         {
@@ -56,16 +62,16 @@ class Image
         }
         else
         {
-            throw new \Exception("Unsupported image extension: {$extension}");
+            throw new \Exception("Unsupported image extension: {$type}");
         }
         
         if ($result === FALSE)
         {
-            throw new \Exception("Failed to convert extension: {$extension}, into an image.");
+            throw new \Exception("Failed to convert extension: {$type}, into an image.");
         }
         
         // if we get here, $result is a resource.
-        return new Image($result);
+        return new Image($result, $type);
     }
     
     
@@ -118,7 +124,7 @@ class Image
         $loweredExtension = strtolower($extension);
         $loadingMap = self::getLoadingMap();
         $supportedExtensions = array_keys($loadingMap);
-        
+
         if (!in_array($loweredExtension, $supportedExtensions))
         {
             throw new \Exception("Unsupported file extension: {$extension}");
@@ -188,12 +194,45 @@ class Image
     }
     
     
-    public static function createFromResource($resource)
+    /**
+     * Save the image to a file (without compression).
+     * @param string $filepath
+     * @throws \Exception
+     * @throws Exception
+     */
+    public function outputToBrowser()
     {
-        return new Image($resource);
+        $map = array(
+            'bmp'  => function($image) { return imagebmp($image, NULL, false); },
+            'gif'  => function($image) { return imagegif($image); },
+            'jpg'  => function($image) { return imagejpeg($image, NULL, 100); },
+            'jpeg' => function($image) { return imagejpeg($image, NULL, 100); },
+            'png'  => function($image) { return imagepng($image, NULL, 0); },
+            'gd'   => function($image) { return imagegd($image); },
+            'gd2'  => function($image) { return imagegd2($image); },
+            'webp' => function($image) { return imagewebp($image, NULL, 100); },
+            'wbmp' => function($image) { return imagewbmp($image); },
+            'xbm'  => function($image) { return imagexbm($image); },
+        );
+        
+        header('Content-Type:' . $this->m_type); // without this, you see garble.
+        $saveMethod = $map[$this->m_type];
+        $result = $saveMethod($this->m_imageResource);
+
+        if ($result === FALSE)
+        {
+            throw new \Exception("Failed to output image.");
+        }
+    }
+    
+    
+    public static function createFromResource($resource, string $type)
+    {
+        return new Image($resource, $type);
     }
     
     
     # Accessors
     public function getResource() { return $this->m_imageResource; }
+    public function getType()     { return $this->m_type; }
 }
