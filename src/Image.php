@@ -46,20 +46,7 @@ class Image
             throw new \Exception("Failed to find extension of file");
         }
         
-        $map = array(
-            'bmp'  => function($input) { return imagecreatefrombmp($input); },
-            'gif'  => function($input) { return imagecreatefromgif($input); },
-            'jpg'  => function($input) { return imagecreatefromjpeg($input); },
-            'jpeg' => function($input) { return imagecreatefromjpeg($input); },
-            'png'  => function($input) { return imagecreatefrompng($input); },
-            'gd'   => function($input) { return imagecreatefromgd($input); },
-            'gd2'  => function($input) { return imagecreatefromgd2($input); },
-            'webp' => function($input) { return imagecreatefromwebp($input); },
-            'wbmp' => function($input) { return imagecreatefromwbmp($input); },
-            'xbm'  => function($input) { return imagecreatefromxbm($input); },
-            'xpm'  => function($input) { return imagecreatefromxpm($input); },
-        );
-        
+        $map = self::getLoadingMap();
         $loweredExtension = strtolower($extension);
         
         if (in_array($loweredExtension, array_keys($map)))
@@ -79,6 +66,76 @@ class Image
         
         // if we get here, $result is a resource.
         return new Image($result);
+    }
+    
+    
+    /**
+     * Get a map of file extensions to callbacks that can be used to load the image.
+     * @return array
+     */
+    private static function getLoadingMap() : array
+    {
+        return array(
+            'bmp'  => function($input) { return imagecreatefrombmp($input); },
+            'gif'  => function($input) { return imagecreatefromgif($input); },
+            'jpg'  => function($input) { return imagecreatefromjpeg($input); },
+            'jpeg' => function($input) { return imagecreatefromjpeg($input); },
+            'png'  => function($input) { return imagecreatefrompng($input); },
+            'gd'   => function($input) { return imagecreatefromgd($input); },
+            'gd2'  => function($input) { return imagecreatefromgd2($input); },
+            'webp' => function($input) { return imagecreatefromwebp($input); },
+            'wbmp' => function($input) { return imagecreatefromwbmp($input); },
+            'xbm'  => function($input) { return imagecreatefromxbm($input); },
+            'xpm'  => function($input) { return imagecreatefromxpm($input); },
+        );
+    }
+    
+    
+    /**
+     * Create an image resource from an image hosting on the internet.
+     * @param string $url - the url to grab the image from.
+     * @param string $extension - e.g. "jpg" or "gif". You only need to provide this if the 
+     *                            image extension is NOT at the end of the url.
+     * @return type
+     * @throws \Exception
+     */
+    public static function createFromUrl(string $url, string $extension="")
+    {
+        if ($extension === "")
+        {
+            // assume the url has the extension in it.
+            $parts = explode(".", $url);
+            $extension = end($parts);
+            
+            if ($extension === FALSE)
+            {
+                $msg = "Failed to dynamically figure out image extension from url. " . 
+                       "Please manually provide it.";
+                throw new \Exception($msg);
+            }
+        }
+        
+        $loweredExtension = strtolower($extension);
+        $loadingMap = self::getLoadingMap();
+        $supportedExtensions = array_keys($loadingMap);
+        
+        if (!in_array($loweredExtension, $supportedExtensions))
+        {
+            throw new \Exception("Unsupported file extension: {$extension}");
+        }
+        
+        $tmpFileName = tempnam(sys_get_temp_dir(), "");
+        $newTmpFilename = $tmpFileName . '.' . $loweredExtension;
+        $renamed = rename($tmpFileName, $newTmpFilename);
+        
+        if ($renamed === FALSE)
+        {
+            throw new \Exception("Failed to create temporary file for the downloaded image.");
+        }
+        
+        $imageData = file_get_contents($url);
+        file_put_contents($newTmpFilename, $imageData);
+        return self::createFromFilepath($newTmpFilename);
     }
     
     
@@ -121,7 +178,7 @@ class Image
             
             if ($result === FALSE)
             {
-                throw new Exception("Failed to save image.");
+                throw new \Exception("Failed to save image.");
             }
         }
         else
