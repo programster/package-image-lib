@@ -16,7 +16,7 @@ class ImageLib
      * @param \Programster\ImageLib\Rectangle $box
      * @return type
      */
-    public static function crop(Image $image, Rectangle $box)
+    public static function crop(Image $image, Rectangle $box) : Image
     {
         $param2 = array(
             'x' => $box->getStartX(),
@@ -25,12 +25,21 @@ class ImageLib
             'height' => $box->getHeight()
         );
         
-        return imagecrop($image->getResource(), $param2);
+        $resource = imagecrop($image->getResource(), $param2);
+        
+        if ($resource === FALSE)
+        {
+            $msg = "Failed to crop image using point: {$box->getStartX()}, $box->getStartY() " . 
+                   "width: {$box->getWidth()} and height: {$box->getHeight()}";
+            throw new \Exception($msg);
+        }
+        
+        return Image::createFromResource($resource);
     }
     
     
     // Create a grid of images using this number or rows and columns.
-    public static function divideImage(Image $image, int $numColumns, int $numRows)
+    public static function divideImage(Image $image, int $numColumns, int $numRows) : array
     {
         $images = array();
         $width = self::getWidth($image);
@@ -54,14 +63,22 @@ class ImageLib
     }
     
     
-    public static function getWidth(Image $image) { return imagesx($image->getResource()); }
-    public static function getHeight(Image $image) { return imagesy($image->getResource()); }
+    public static function getWidth(Image $image) : int
+    { 
+        return imagesx($image->getResource()); 
+    }
+    
+    
+    public static function getHeight(Image $image) : int
+    { 
+        return imagesy($image->getResource()); 
+    }
     
     
     
     
     // create grid of images cut out of larger image
-    public static function gridCrop(Image $image, Dimensions $dimensions)
+    public static function gridCrop(Image $image, Dimensions $dimensions) : array
     {
         $width = self::getWidth($image);
         $height = self::getHeight($image);
@@ -84,6 +101,7 @@ class ImageLib
         return $images;
     }
     
+    
     /**
      * Scale an image by a percentage of its original size. E.g. 50 to make it half its size or 
      * 200 to make it twice the size.
@@ -91,22 +109,23 @@ class ImageLib
      * @param float $percentage - a percentage. e.g. 100 for 100%.
      * @return type
      */
-    public static function scaleToPercentage(Image $image, float $percentage)
+    public static function scaleToPercentage(Image $image, float $percentage) : Image
     {
         $currentWidth = self::getWidth($image);
-        $decimalPercentage = $percentage / 100;
+        $decimalPercentage = $percentage / 100.0;
         $newWidth = $currentWidth * $decimalPercentage;
-        return imagescale($image->getResource(), $newWidth);
+        $newResource = imagescale($image->getResource(), $newWidth);
+        return Image::createFromResource($newResource);
     }
     
     // shrinks an image to this height, preserving aspect ratio
-    public static function scaleToWidth(Image $image, int $width)
-    {
+    public static function scaleToWidth(Image $image, int $width) : Image
+    { 
         return imagescale($image->getResource(), $width);
     }
     
     // shrinks an image to this height, preserving aspect ratio
-    public static function scaleToHeight(Image $image, int $height)
+    public static function scaleToHeight(Image $image, int $height) : Image
     {
         $currentHeight = self::getHeight($image);
         $decimalPercentage = $height / $currentHeight;
@@ -116,13 +135,13 @@ class ImageLib
     }
     
     
-    public static function scaleToDimensions(Image $image, Dimensions $dimensions)
+    public static function scaleToDimensions(Image $image, Dimensions $dimensions) : Image
     {
         return imagescale($image->getResource(), $dimensions->getWidth(), $dimensions->getHeight());
     }
     
     // Alias for scaleToDimensions
-    public static function setDimensions(Image $image, Dimensions $dimensions)
+    public static function setDimensions(Image $image, Dimensions $dimensions) : Image
     {
         return self::scaleToDimensions($image, $dimensions);
     }
@@ -130,7 +149,7 @@ class ImageLib
     
     // shrink an image so that it would fit in a box or specified height and width
     // whilst preserving aspect ratio
-    public static function scaleToFit(Image $image, Dimensions $box)
+    public static function scaleToFit(Image $image, Dimensions $box) : Image
     {
         $currentHeight = self::getHeight($image);
         $currentWidth = self::getWidth($image);
@@ -143,7 +162,7 @@ class ImageLib
     }
     
     
-    public static function shrinkToFit(Image $image, Dimensions $box) 
+    public static function shrinkToFit(Image $image, Dimensions $box) : Image
     {
         return self::scaleToFit($image, $box);
     }
@@ -155,7 +174,7 @@ class ImageLib
     // preserves aspect ratio.
     // This is similar to scale to fit, but this image will likely be bigger than the 
     // bounding box.
-    public static function shrinkToMin(Image $image, Dimensions $box)
+    public static function shrinkToMin(Image $image, Dimensions $box) : Image
     {
         $currentHeight = self::getHeight($image);
         $currentWidth = self::getWidth($image);
@@ -170,7 +189,7 @@ class ImageLib
     
     // shrink an image so that it has as close to the specified number of pixels as possible
     // whilst preserving aspect ratio.
-    public static function shrinkToNumPixels(Image $image, int $maxPixels)
+    public static function shrinkToNumPixels(Image $image, int $maxPixels) : Image
     {
         $width = self::getWidth($image);
         $height = self::getHeight($image);
@@ -181,7 +200,7 @@ class ImageLib
     
     
     // extract the specified size of a rectangle out of the center of an image.
-    public static function centerCrop(Image $image, Dimensions $size)
+    public static function centerCrop(Image $image, Dimensions $size) : Image
     {
         $width = self::getWidth($image);
         $height = self::getHeight($image);
@@ -192,8 +211,8 @@ class ImageLib
         $halfBoxWidth = $size->getWidth() / 2.0;
         $halfBoxHeight = $size->getHeight() / 2.0;
         
-        $startX = round($centerX - $halfBoxHeight);
-        $startY = round($centerY - $halfBoxWidth);
+        $startX = round($centerX - $halfBoxWidth);
+        $startY = round($centerY - $halfBoxHeight);
         
         $rectangle = rectangle::createFromPointAndSize(new Point($startX, $startY), $size);
         return self::crop($image, $rectangle);
@@ -204,14 +223,14 @@ class ImageLib
     // this will shrink the image before cropping/expanding to ensure we capture as much
     // of the image as possible.
     // you may widh to look at centercrop
-    public static function thumbnail(Image $image, Dimensions $size)
+    public static function thumbnail(Image $image, Dimensions $size) : Image
     {
-        $shrunkImage = self::shrinkToMin($image, $size->getWidth(), $size->getHeight());
+        $shrunkImage = self::shrinkToMin($image, $size);
         return self::centerCrop($shrunkImage, $size);
     }
     
     
-    public static function cropToAspectRatio(Image $image,  Dimensions $ratio)
+    public static function cropToAspectRatio(Image $image,  Dimensions $ratio) : Image
     {
         $widthFactor =  self::getWidth($image) / $ratio->getWidth();
         $heightFactor = self::getHeight($image) / $ratio->getHeight();
@@ -227,7 +246,7 @@ class ImageLib
     }
     
     
-    public static function drawRectangle(Image $image, Rectangle $box, Color $color, int $thickness)
+    public static function drawRectangle(Image $image, Rectangle $box, Color $color, int $thickness) : Image
     {
         foreach ($box->getLines() as $line)
         {

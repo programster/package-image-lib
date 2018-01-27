@@ -14,6 +14,15 @@ class Rectangle
     private $m_height;
     
     
+    /**
+     * Create a rectangle.
+     * WARNING - when performing operations like drawing and cropping, a Y value of 0 is at the 
+     *           top of the image, and the higher it gets, the further down the image it is.
+     * @param int $startX
+     * @param int $startY
+     * @param int $width
+     * @param int $height
+     */
     public function __construct(int $startX, int $startY, int $width, int $height)
     {
         $this->m_startX = $startX;
