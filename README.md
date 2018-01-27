@@ -8,7 +8,7 @@ rather than editing the original. However this probably needs further testing/wo
 
 ## Example Usage
 
-```
+```php
 <?php
 
 # Include the ImageLib library
