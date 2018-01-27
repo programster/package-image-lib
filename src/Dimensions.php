@@ -1,10 +1,11 @@
 <?php
 
 /* 
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * A way to store the width and height of something. If you combine this with a coordinate system
+ * (aka a point), you can upgrade to a Rectangle.
  */
+
+namespace Programster\ImageLib;
 
 class Dimensions
 {

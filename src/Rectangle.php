@@ -1,5 +1,11 @@
 <?php
 
+/*
+ * A rectangle that can be used for operations such as cropping an image, or drawing.
+ */
+
+namespace Programster\ImageLib;
+
 class Rectangle
 {
     private $m_startX;

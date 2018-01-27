@@ -1,10 +1,11 @@
 <?php
 
 /* 
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * A value object to represent a color. This performs validation and will allow multiple ways
+ * to create colors in future. E.g. create from hex etc.
  */
+
+namespace Programster\ImageLib;
 
 class Color
 {

@@ -1,10 +1,10 @@
 <?php
 
 /* 
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
+ * An object to represent a line we may wish to draw on an image.
  */
+
+namespace Programster\ImageLib;
 
 class Line
 {
