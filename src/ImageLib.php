@@ -137,11 +137,22 @@ class ImageLib
     
     public static function scaleToDimensions(Image $image, Dimensions $dimensions) : Image
     {
-        return imagescale($image->getResource(), $dimensions->getWidth(), $dimensions->getHeight());
+        $resource = imagescale(
+            $image->getResource(), 
+            $dimensions->getWidth(), 
+            $dimensions->getHeight()
+        );
+        
+        return Image::createFromResource($resource);
     }
     
     // Alias for scaleToDimensions
     public static function setDimensions(Image $image, Dimensions $dimensions) : Image
+    {
+        return self::scaleToDimensions($image, $dimensions);
+    }
+    
+    public function setSize(Image $image, Dimensions $dimensions) : Image
     {
         return self::scaleToDimensions($image, $dimensions);
     }
@@ -157,7 +168,7 @@ class ImageLib
         $widthPercentage = $box->getWidth() / $currentWidth;
         $heightPercentage = $box->getHeight() / $currentHeight;
         
-        $percentage = min($widthPercentage, $heightPercentage);
+        $percentage = min($widthPercentage, $heightPercentage) * 100;
         return self::scaleToPercentage($image, $percentage);
     }
     
@@ -166,7 +177,6 @@ class ImageLib
     {
         return self::scaleToFit($image, $box);
     }
-            
     
     
     // shrink an image so that the either the width or the height will be what is 
@@ -182,19 +192,30 @@ class ImageLib
         $widthPercentage = $box->getWidth() / $currentWidth;
         $heightPercentage = $box->getHeight() / $currentHeight;
         
-        $percentage = max($widthPercentage, $heightPercentage);
+        $percentage = max($widthPercentage, $heightPercentage) * 100;
         return self::scaleToPercentage($image, $percentage);
     }
     
     
-    // shrink an image so that it has as close to the specified number of pixels as possible
-    // whilst preserving aspect ratio.
+    // alias for scaleToNumPixels
     public static function shrinkToNumPixels(Image $image, int $maxPixels) : Image
+    {
+        return self::scaleToNumPixels($image, $maxPixels);
+    }
+    
+    
+    /**
+     * Scale an image so it has as close to the number of pixels specified, as possible.
+     * @param \Programster\ImageLib\Image $image
+     * @param int $desiredNumPixels - the number of desired pixels. 1920 x 1080 is 2,073,600 
+     * @return \Programster\ImageLib\Image
+     */
+    public static function scaleToNumPixels(Image $image, int $desiredNumPixels) : Image
     {
         $width = self::getWidth($image);
         $height = self::getHeight($image);
-        $numPixels = $width * $height;
-        $percentage = $maxPixels / $numPixels;
+        $currentNumPixels = $width * $height;
+        $percentage = ($desiredNumPixels / $currentNumPixels) * 100;
         return self::scaleToPercentage($image, $percentage);
     }
     
