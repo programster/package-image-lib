@@ -59,7 +59,12 @@ class Rectangle
         
         $topLeftPoint = new Point($point->getX() - $halfWidth, $point->getY() - $halfHeight);
         
-        return new Rectangle($topLeftPoint, $size->getWidth(), $size->getHeight());
+        return new Rectangle(
+            $topLeftPoint->getX(), 
+            $topLeftPoint->getY(), 
+            $size->getWidth(), 
+            $size->getHeight()
+        );
     }
     
     
