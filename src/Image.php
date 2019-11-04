@@ -35,7 +35,7 @@ class Image
      * @return \Programster\ImageLib\Image
      * @throws \Exception
      */
-    public static function createFromFilepath(string $filepath, string $type = "")
+    public static function createFromFilepath($filepath, $type = "")
     {
         if (!file_exists($filepath))
         {
