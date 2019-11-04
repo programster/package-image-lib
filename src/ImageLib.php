@@ -92,6 +92,17 @@ class ImageLib
 
 
     /**
+     * Get the number of pixels the image has (width x height)
+     * @param \Programster\ImageLib\Image $image
+     * @return int - the number of pixels in the image.
+     */
+    public static function getNumPixels(Image $image)
+    {
+        return ImageLib::getHeight($image) * ImageLib::getWidth($image);
+    }
+
+
+    /**
      * Create grid of images cut out of larger image
      * @param \Programster\ImageLib\Image $image
      * @param \Programster\ImageLib\Dimensions $dimensions
