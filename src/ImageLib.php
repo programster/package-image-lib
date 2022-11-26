@@ -148,6 +148,12 @@ class ImageLib
         $decimalPercentage = $percentage / 100.0;
         $newWidth = $currentWidth * $decimalPercentage;
         $newResource = imagescale($image->getResource(), $newWidth);
+
+        if ($newResource === false)
+        {
+            throw new \Exception("Failed to scale image to new width.");
+        }
+
         return Image::createFromResource($newResource, $image->getType());
     }
 
@@ -161,6 +167,12 @@ class ImageLib
     public static function scaleToWidth(Image $image, int $width) : Image
     {
         $newImage = imagescale($image->getResource(), $width);
+
+        if ($newImage === false)
+        {
+            throw new \Exception("Failed to scale image to new width.");
+        }
+
         return Image::createFromResource($newImage, $image->getType());
     }
 
@@ -178,6 +190,12 @@ class ImageLib
         $currentWidth = self::getWidth($image);
         $newWidth = $currentWidth * $decimalPercentage;
         $rescaledImage = imagescale($image->getResource(), $newWidth);
+
+        if ($rescaledImage === false)
+        {
+            throw new \Exception("Failed to scale image to new width");
+        }
+
         return Image::createFromResource($rescaledImage, $image->getType());
     }
 
@@ -195,6 +213,11 @@ class ImageLib
             $dimensions->getWidth(),
             $dimensions->getHeight()
         );
+
+        if ($resource === false)
+        {
+            throw new \Exception("Failed to scale image to new width");
+        }
 
         return Image::createFromResource($resource, $image->getType());
     }
