@@ -9,18 +9,18 @@ namespace Programster\ImageLib;
 
 class Image
 {
-    private $m_imageResource;
-    private $m_type;
+    private \GdImage $m_imageResource;
+    private string $m_type;
 
 
     /**
      * Private constructor for internal use only.
      * If you wish to create one of these objects, please use one of the static create methods.
      * Can't wait for polymorphism in PHP.
-     * @param type $resource
+     * @param \GdImage $resource
      * @param string $type -  the type/extension of the file. E.g. "jpg", "bmp" etc.
      */
-    private function __construct($resource, string $type)
+    private function __construct(\GdImage $resource, string $type)
     {
         $this->m_imageResource = $resource;
         $this->m_type = $type;
@@ -35,7 +35,7 @@ class Image
      * @return \Programster\ImageLib\Image
      * @throws \Exception
      */
-    public static function createFromFilepath(string $filepath, string $type = "")
+    public static function createFromFilepath(string $filepath, string $type = "") : Image
     {
         if (!file_exists($filepath))
         {
@@ -77,28 +77,6 @@ class Image
 
 
     /**
-     * Get a map of file extensions to callbacks that can be used to load the image.
-     * @return array - the map of types to the functin to run to load the image.
-     */
-    private static function getLoadingMap() : array
-    {
-        return array(
-            'bmp'  => function($input) { return imagecreatefrombmp($input); },
-            'gif'  => function($input) { return imagecreatefromgif($input); },
-            'jpg'  => function($input) { return imagecreatefromjpeg($input); },
-            'jpeg' => function($input) { return imagecreatefromjpeg($input); },
-            'png'  => function($input) { return imagecreatefrompng($input); },
-            'gd'   => function($input) { return imagecreatefromgd($input); },
-            'gd2'  => function($input) { return imagecreatefromgd2($input); },
-            'webp' => function($input) { return imagecreatefromwebp($input); },
-            'wbmp' => function($input) { return imagecreatefromwbmp($input); },
-            'xbm'  => function($input) { return imagecreatefromxbm($input); },
-            'xpm'  => function($input) { return imagecreatefromxpm($input); },
-        );
-    }
-
-
-    /**
      * Create an image resource from an image hosting on the internet.
      * @param string $url - the url to grab the image from.
      * @param string $extension - e.g. "jpg" or "gif". You only need to provide this if the
@@ -106,7 +84,7 @@ class Image
      * @return type
      * @throws \Exception
      */
-    public static function createFromUrl(string $url, string $extension="")
+    public static function createFromUrl(string $url, string $extension = "") : Image
     {
         if ($extension === "")
         {
@@ -148,11 +126,16 @@ class Image
 
     /**
      * Save the image to a file (without compression).
-     * @param string $filepath
+     * @param type $filepath
+     * @param int $quality - The quality parameter that will be used. This number varies based on file format.
+     *             jpg - From 0 (worst) to 100 (best quality). A value of -1 uses the default IJG quality value (about 75).
+     *             webp -  quality ranges from 0 (worst quality, smaller file) to 100 (best quality, biggest file).
+     *                     if you leave as -1 default, will default to 75.
+     *             png - Compression level: from 0 (no compression) to 9. The default (-1) uses the zlib compression
+     *                   default. For more information see the zlib manual.
      * @throws \Exception
-     * @throws Exception
      */
-    public function save(string $filepath)
+    public function save(string $filepath, int $quality = -1) : void
     {
         $parts = explode(".", $filepath);
         $extension = end($parts);
@@ -162,18 +145,24 @@ class Image
             throw new \Exception("Failed to find extension of file");
         }
 
+        // webp doesn't have a -1 default, so default to 100
+        if ($quality === -1 && $extension === 'webp')
+        {
+            $quality = 75;
+        }
+
         // todo
         $map = array(
-            'bmp'  => function($image, $filepath) { return imagebmp($image, $filepath, false); },
-            'gif'  => function($image, $filepath) { return imagegif($image, $filepath); },
-            'jpg'  => function($image, $filepath) { return imagejpeg($image, $filepath, 100); },
-            'jpeg' => function($image, $filepath) { return imagejpeg($image, $filepath, 100); },
-            'png'  => function($image, $filepath) { return imagepng($image, $filepath, 0); },
-            'gd'   => function($image, $filepath) { return imagegd($image, $filepath); },
-            'gd2'  => function($image, $filepath) { return imagegd2($image, $filepath); },
-            'webp' => function($image, $filepath) { return imagewebp($image, $filepath, 100); },
-            'wbmp' => function($image, $filepath) { return imagewbmp($image, $filepath); },
-            'xbm'  => function($image, $filepath) { return imagexbm($image, $filepath); },
+            'bmp'  => function($image, $filepath, $quality) { return imagebmp($image, $filepath, false); },
+            'gif'  => function($image, $filepath, $quality) { return imagegif($image, $filepath); },
+            'jpg'  => function($image, $filepath, $quality) { return imagejpeg($image, $filepath, $quality); },
+            'jpeg' => function($image, $filepath, $quality) { return imagejpeg($image, $filepath, $quality); },
+            'png'  => function($image, $filepath, $quality) { return imagepng($image, $filepath, $quality); },
+            'gd'   => function($image, $filepath, $quality) { return imagegd($image, $filepath); },
+            'gd2'  => function($image, $filepath, $quality) { return imagegd2($image, $filepath); },
+            'webp' => function($image, $filepath, $quality) { return imagewebp($image, $filepath, $quality); },
+            'wbmp' => function($image, $filepath, $quality) { return imagewbmp($image, $filepath); },
+            'xbm'  => function($image, $filepath, $quality) { return imagexbm($image, $filepath); },
         );
 
         $loweredExtension = strtolower($extension);
@@ -181,7 +170,7 @@ class Image
         if (in_array($loweredExtension, array_keys($map)))
         {
             $saveMethod = $map[$loweredExtension];
-            $result = $saveMethod($this->m_imageResource, $filepath);
+            $result = $saveMethod($this->m_imageResource, $filepath, $quality);
 
             if ($result === FALSE)
             {
@@ -201,7 +190,7 @@ class Image
      * @throws \Exception
      * @throws Exception
      */
-    public function outputToBrowser()
+    public function outputToBrowser() : void
     {
         $map = array(
             'bmp'  => function($image) { return imagebmp($image, NULL, false); },
@@ -233,13 +222,35 @@ class Image
      * @param string $type - the type for the image. E.g. "png", "jpg" etc.
      * @return \Programster\ImageLib\Image
      */
-    public static function createFromResource($resource, string $type)
+    public static function createFromResource(\GdImage $resource, $type) : \GdImage
     {
         return new Image($resource, $type);
     }
 
 
+    /**
+     * Get a map of file extensions to callbacks that can be used to load the image.
+     * @return array - the map of types to the functin to run to load the image.
+     */
+    private static function getLoadingMap()
+    {
+        return array(
+            'bmp'  => function($input) { return imagecreatefrombmp($input); },
+            'gif'  => function($input) { return imagecreatefromgif($input); },
+            'jpg'  => function($input) { return imagecreatefromjpeg($input); },
+            'jpeg' => function($input) { return imagecreatefromjpeg($input); },
+            'png'  => function($input) { return imagecreatefrompng($input); },
+            'gd'   => function($input) { return imagecreatefromgd($input); },
+            'gd2'  => function($input) { return imagecreatefromgd2($input); },
+            'webp' => function($input) { return imagecreatefromwebp($input); },
+            'wbmp' => function($input) { return imagecreatefromwbmp($input); },
+            'xbm'  => function($input) { return imagecreatefromxbm($input); },
+            'xpm'  => function($input) { return imagecreatefromxpm($input); },
+        );
+    }
+
+
     # Accessors
-    public function getResource() { return $this->m_imageResource; }
-    public function getType()     { return $this->m_type; }
+    public function getResource() : \GdImage { return $this->m_imageResource; }
+    public function getType() : string       { return $this->m_type; }
 }

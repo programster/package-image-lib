@@ -1,20 +1,23 @@
 <?php
 
 /*
- * This is the main point of the library. Call it's static methods to achieve what you want.
+ * This is the main point of the library. Call its static methods to achieve what you want.
  * The other classes just help aid with calling these functions with the necessary parameters
  */
 
 
 namespace Programster\ImageLib;
 
+use Exception;
+
 class ImageLib
 {
     /**
      * Crop an image
-     * @param resource $image - the image resource from getImageObject
-     * @param \Programster\ImageLib\Rectangle $box
+     * @param Image $image - the image resource from getImageObject
+     * @param Rectangle $box - The bounding box of the crop.
      * @return Image - the resulting image object.
+     * @throws Exception
      */
     public static function crop(Image $image, Rectangle $box) : Image
     {
@@ -29,9 +32,9 @@ class ImageLib
 
         if ($resource === FALSE)
         {
-            $msg = "Failed to crop image using point: {$box->getStartX()}, $box->getStartY() " .
+            $msg = "Failed to crop image using point: {$box->getStartX()}, {$box->getStartY()} " .
                    "width: {$box->getWidth()} and height: {$box->getHeight()}";
-            throw new \Exception($msg);
+            throw new Exception($msg);
         }
 
         return Image::createFromResource($resource, $image->getType());
@@ -39,10 +42,10 @@ class ImageLib
 
 
     /**
-     * Create a grid of images using this number or rows and columns.
-     * @param \Programster\ImageLib\Image $image
-     * @param int $numColumns
-     * @param int $numRows
+     * Create a grid of images using this number of rows and columns.
+     * @param Image $image $image
+     * @param int $numColumns - the number of columns in the grid
+     * @param int $numRows - the number of rows in the grid
      * @return array - the resulting "grid" of images.
      */
     public static function divideImage(Image $image, int $numColumns, int $numRows) : array
@@ -70,8 +73,8 @@ class ImageLib
 
 
     /**
-     * GEt the width of the image
-     * @param \Programster\ImageLib\Image $image
+     * Get the width of the image
+     * @param Image $image
      * @return int - the number of pixels wide.
      */
     public static function getWidth(Image $image) : int
@@ -82,7 +85,7 @@ class ImageLib
 
     /**
      * Get the height of the image.
-     * @param \Programster\ImageLib\Image $image
+     * @param Image $image
      * @return int - the number of pixels tall
      */
     public static function getHeight(Image $image) : int
@@ -92,9 +95,20 @@ class ImageLib
 
 
     /**
+     * Get the number of pixels the image has (width x height)
+     * @param Image $image
+     * @return int - the number of pixels in the image.
+     */
+    public static function getNumPixels(Image $image) : int
+    {
+        return ImageLib::getHeight($image) * ImageLib::getWidth($image);
+    }
+
+
+    /**
      * Create grid of images cut out of larger image
-     * @param \Programster\ImageLib\Image $image
-     * @param \Programster\ImageLib\Dimensions $dimensions
+     * @param Image $image
+     * @param Dimensions $dimensions
      * @return array - the array of images.
      */
     public static function gridCrop(Image $image, Dimensions $dimensions) : array
@@ -124,9 +138,9 @@ class ImageLib
     /**
      * Scale an image by a percentage of its original size. E.g. 50 to make it half its size or
      * 200 to make it twice the size.
-     * @param \Programster\ImageLib\Image $image
+     * @param Image $image
      * @param float $percentage - a percentage. e.g. 100 for 100%.
-     * @return \Programster\ImageLib\Image - the resulting image.
+     * @return Image - the resulting image.
      */
     public static function scaleToPercentage(Image $image, float $percentage) : Image
     {
@@ -140,37 +154,39 @@ class ImageLib
 
     /**
      * Shrinks an image to this height, preserving aspect ratio
-     * @param \Programster\ImageLib\Image $image
+     * @param Image $image
      * @param int $width
-     * @return \Programster\ImageLib\Image
+     * @return Image
      */
     public static function scaleToWidth(Image $image, int $width) : Image
     {
-        return imagescale($image->getResource(), $width);
+        $newImage = imagescale($image->getResource(), $width);
+        return Image::createFromResource($newImage, $image->getType());
     }
 
 
     /**
      * Shrinks an image to this height, preserving aspect ratio
-     * @param \Programster\ImageLib\Image $image
+     * @param Image $image
      * @param int $height
-     * @return \Programster\ImageLib\Image
+     * @return Image
      */
-    public static function scaleToHeight(Image $image, int $height) : Image
+    public static function scaleToHeight(Image $image, $height) : Image
     {
         $currentHeight = self::getHeight($image);
         $decimalPercentage = $height / $currentHeight;
         $currentWidth = self::getWidth($image);
         $newWidth = $currentWidth * $decimalPercentage;
-        return imagescale($image->getResource(), $newWidth);
+        $rescaledImage = imagescale($image->getResource(), $newWidth);
+        return Image::createFromResource($rescaledImage, $image->getType());
     }
 
 
     /**
      * Scale an image to the provided dimensions.
-     * @param \Programster\ImageLib\Image $image
-     * @param \Programster\ImageLib\Dimensions $dimensions
-     * @return \Programster\ImageLib\Image
+     * @param Image $image
+     * @param Dimensions $dimensions
+     * @return Image
      */
     public static function scaleToDimensions(Image $image, Dimensions $dimensions) : Image
     {
@@ -186,9 +202,9 @@ class ImageLib
 
     /**
      * Alias for scaleToDimensions
-     * @param \Programster\ImageLib\Image $image
-     * @param \Programster\ImageLib\Dimensions $dimensions
-     * @return \Programster\ImageLib\Image - the resulting image
+     * @param Image $image
+     * @param Dimensions $dimensions
+     * @return Image - the resulting image
      */
     public static function setDimensions(Image $image, Dimensions $dimensions) : Image
     {
@@ -198,9 +214,9 @@ class ImageLib
 
     /**
      * Alias for scaleToDimensions
-     * @param \Programster\ImageLib\Image $image
-     * @param \Programster\ImageLib\Dimensions $dimensions
-     * @return \Programster\ImageLib\Image - the resulting image.
+     * @param Image $image
+     * @param Dimensions $dimensions
+     * @return Image - the resulting image.
      */
     public function setSize(Image $image, Dimensions $dimensions) : Image
     {
@@ -209,11 +225,10 @@ class ImageLib
 
 
     /**
-     * shrink an image so that it would fit in a box or specified height and width
-     * whilst preserving aspect ratio
-     * @param \Programster\ImageLib\Image $image
-     * @param \Programster\ImageLib\Dimensions $box
-     * @return \Programster\ImageLib\Image
+     * shrink an image so that it would fit in a box or specified height and width whilst preserving aspect ratio
+     * @param Image $image
+     * @param Dimensions $box
+     * @return Image
      */
     public static function scaleToFit(Image $image, Dimensions $box) : Image
     {
@@ -230,9 +245,9 @@ class ImageLib
 
     /**
      *
-     * @param \Programster\ImageLib\Image $image
-     * @param \Programster\ImageLib\Dimensions $box
-     * @return \Programster\ImageLib\Image
+     * @param Image $image
+     * @param Dimensions $box
+     * @return Image
      */
     public static function shrinkToFit(Image $image, Dimensions $box) : Image
     {
@@ -241,14 +256,12 @@ class ImageLib
 
 
     /**
-     * shrink an image so that the either the width or the height will be what is
-     * specified, but the other will be larger.
-     * preserves aspect ratio.
-     * This is similar to scale to fit, but this image will likely be bigger than the
-     * bounding box.
-     * @param \Programster\ImageLib\Image $image
-     * @param \Programster\ImageLib\Dimensions $box
-     * @return \Programster\ImageLib\Image
+     * Shrink an image so that either the width or the height will be what is specified, but the other will be larger.
+     * Preserves aspect ratio.
+     * This is similar to scale to fit, but this image will likely be bigger than the bounding box.
+     * @param Image $image
+     * @param Dimensions $box
+     * @return Image
      */
     public static function shrinkToMin(Image $image, Dimensions $box) : Image
     {
@@ -265,23 +278,23 @@ class ImageLib
 
     /**
      * Alias for scaleToNumPixels
-     * @param \Programster\ImageLib\Image $image
+     * @param Image $image
      * @param int $maxPixels
-     * @return \Programster\ImageLib\Image
+     * @return Image
      */
-    public static function shrinkToNumPixels(Image $image, int $maxPixels) : Image
+    public static function shrinkToNumPixels(Image $image, $maxPixels) : Image
     {
         return self::scaleToNumPixels($image, $maxPixels);
     }
 
 
     /**
-     * Scale an image so it has as close to the number of pixels specified, as possible.
-     * @param \Programster\ImageLib\Image $image
+     * Scale an image, so that it has as close to the number of pixels specified, as possible.
+     * @param Image $image
      * @param int $desiredNumPixels - the number of desired pixels. 1920 x 1080 is 2,073,600
-     * @return \Programster\ImageLib\Image
+     * @return Image
      */
-    public static function scaleToNumPixels(Image $image, int $desiredNumPixels) : Image
+    public static function scaleToNumPixels(Image $image, $desiredNumPixels) : Image
     {
         $width = self::getWidth($image);
         $height = self::getHeight($image);
@@ -293,9 +306,9 @@ class ImageLib
 
     /**
      * Extract the specified size of a rectangle out of the center of an image.
-     * @param \Programster\ImageLib\Image $image
-     * @param \Programster\ImageLib\Dimensions $size
-     * @return \Programster\ImageLib\Image
+     * @param Image $image
+     * @param Dimensions $size
+     * @return Image
      */
     public static function centerCrop(Image $image, Dimensions $size) : Image
     {
@@ -320,9 +333,9 @@ class ImageLib
      * Create a thumbnail of the specified size.
      * This will shrink the image before cropping/expanding to ensure we capture as much
      * f the image as possible. You may wish to look at centercrop
-     * @param \Programster\ImageLib\Image $image
-     * @param \Programster\ImageLib\Dimensions $size
-     * @return \Programster\ImageLib\Image
+     * @param Image $image
+     * @param Dimensions $size
+     * @return Image
      */
     public static function thumbnail(Image $image, Dimensions $size) : Image
     {
@@ -333,9 +346,9 @@ class ImageLib
 
     /**
      * Crop an image so that it will have the provided aspect ratio, preserving as much of the image as possible.
-     * @param \Programster\ImageLib\Image $image
-     * @param \Programster\ImageLib\Dimensions $ratio
-     * @return \Programster\ImageLib\Image
+     * @param Image $image
+     * @param Dimensions $ratio
+     * @return Image
      */
     public static function cropToAspectRatio(Image $image,  Dimensions $ratio) : Image
     {
@@ -355,11 +368,11 @@ class ImageLib
 
     /**
      * Draw a rectangle over an image.
-     * @param \Programster\ImageLib\Image $image
-     * @param \Programster\ImageLib\Rectangle $box
-     * @param \Programster\ImageLib\Color $color
+     * @param Image $image
+     * @param Rectangle $box
+     * @param Color $color
      * @param int $thickness
-     * @return \Programster\ImageLib\Image
+     * @return Image
      */
     public static function drawRectangle(Image $image, Rectangle $box, Color $color, int $thickness) : Image
     {
@@ -374,9 +387,9 @@ class ImageLib
 
     /**
      * Draw a line over an image.
-     * @param \Programster\ImageLib\Image $image
+     * @param Image $image
      * @param \Programster\ImageLib\Line $line
-     * @param \Programster\ImageLib\Color $color
+     * @param Color $color
      * @param int $thickness
      * @return bool - whether imageline operation was successful.
      */
@@ -392,5 +405,69 @@ class ImageLib
             $line->getEndPoint()->getY(),
             imagecolorallocate($image->getResource(), $color->getRed(), $color->getGreen(), $color->getBlue())
         );
+    }
+
+
+    /**
+     * Blurs out the specified rectangle in an image. The easiest way to do this is to use imageconvolution()
+     * https://stackoverflow.com/questions/20114956/php-gd-blur-part-of-an-image
+     * @param Image $sourceImage
+     * @param Rectangle $rectangle
+     * @param int $strength - how strong the blurring should be. This is actually the number of iterations we perform the
+     * blur, so the number needs to be between 1 and infinite.
+     * @return Image
+     */
+    public static function blurArea(Image $sourceImage, Rectangle $rectangle, int $strength = 1) : Image
+    {
+        if ($strength < 1)
+        {
+            $strength = 1;
+        }
+
+        $image = $sourceImage->getResource();
+
+        $gaussian = array(
+            array(1.0, 2.0, 1.0),
+            array(2.0, 4.0, 2.0),
+            array(1.0, 2.0, 1.0)
+        );
+
+        // make a canvas for a second image...
+        $img2 = imagecreatetruecolor($rectangle->getWidth(), $rectangle->getHeight()); // create img2 for selection
+
+        // create the second image from a selection of the source image.
+        imagecopy(
+            $img2,
+            $image,
+            0,
+            0,
+            $rectangle->getStartX(),
+            $rectangle->getStartY(),
+            $rectangle->getWidth(),
+            $rectangle->getHeight()
+        );
+
+        for ($i=0; $i<$strength; $i++)
+        {
+            // apply the blur to the selection image
+            imageconvolution($img2, $gaussian, 16, 0); // apply convolution
+        }
+
+        // merge the blurred image back onto the original source
+        imagecopymerge(
+            $image,
+            $img2,
+            $rectangle->getStartX(),
+            $rectangle->getStartY(),
+            0,
+            0,
+            $rectangle->getWidth(),
+            $rectangle->getHeight(),
+            100
+        );
+
+        imagedestroy($img2);
+
+        return Image::createFromResource($image, $sourceImage->getType());
     }
 }
