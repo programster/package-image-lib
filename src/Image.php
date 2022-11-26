@@ -222,7 +222,7 @@ class Image
      * @param string $type - the type for the image. E.g. "png", "jpg" etc.
      * @return \Programster\ImageLib\Image
      */
-    public static function createFromResource(\GdImage $resource, $type) : \GdImage
+    public static function createFromResource(\GdImage $resource, $type) : Image
     {
         return new Image($resource, $type);
     }

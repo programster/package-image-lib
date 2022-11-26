@@ -146,7 +146,7 @@ class ImageLib
     {
         $currentWidth = self::getWidth($image);
         $decimalPercentage = $percentage / 100.0;
-        $newWidth = $currentWidth * $decimalPercentage;
+        $newWidth = intval($currentWidth * $decimalPercentage);
         $newResource = imagescale($image->getResource(), $newWidth);
 
         if ($newResource === false)
